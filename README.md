@@ -30,12 +30,12 @@ a while!
 
 ### The core idea
 -----------------
-[] At server boot crawl into the public root searching for files  
-[] Query each known file type (using extension) for related files/dependencies  
-[] When a file is requested by the client check dependencies and try to push 
+[ ] At server boot crawl into the public root searching for files  
+[ ] Query each known file type (using extension) for related files/dependencies  
+[ ] When a file is requested by the client check dependencies and try to push 
 as many as bandwidth allows  
-[] Serve node_modules libraries that are required by the JS/TS files - Developer should be aware if the library is browser compatible! 
-[] ?? Apply file transformations with the option to serve them from memory or
-from file dump  (ex: TS -> JS, TSX -> JSX, Vue -> JS, etc.)
-[] ?? Hold information on a CacheStore about the recently served and not modified files
-[] ?? Keep track of modified files to invalidate cache (watch file system)
+[ ] Serve node_modules libraries that are required by the JS/TS files - Developer should be aware if the library is browser compatible! 
+[ ] ?? Apply file transformations with the option to serve them from memory or
+from file dump  (ex: TS -> JS, TSX -> JSX, Vue -> JS, etc.)  
+[ ] ?? Hold information on a CacheStore about the recently served and not modified files  
+[ ] ?? Keep track of modified files to invalidate cache (watch file system)  
