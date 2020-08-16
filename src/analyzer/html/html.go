@@ -1,21 +1,26 @@
 package html
 
 import (
-	"bytes"
+	"io/ioutil"
 	"log"
-	"os"
 	"regexp"
 	"strings"
+
+	"github.com/kr/pretty"
+
+	"github.com/nonanick/impatience/transform"
 
 	"github.com/nonanick/impatience/analyzer"
 )
 
-var jsImporter, _ = regexp.Compile("<script.*src=(?P<path>\".*\"|'.*').*>.*<\\/script>")
-var cssImporter, _ = regexp.Compile("<link.*href=(?P<path>\".*\"|'.*').*>")
+var jsImporter, _ = regexp.Compile("<script(.*)?src=(?P<path>\".*\"|'.*').*>[\\s\\S]*?<\\/script>")
+var cssImporter, _ = regexp.Compile("<link(.*)?href=(?P<path>\".*\"|'.*').*>")
+var imgImporter, _ = regexp.Compile("<img.*src=(?P<path>\".*\"|'.*').*/>")
 
 var dependeciesMatcher = []*regexp.Regexp{
 	jsImporter,
 	cssImporter,
+	imgImporter,
 }
 
 // HTMLAnalyzer - Open and analyzes a JS file searcing for its dependencies
@@ -23,18 +28,17 @@ var HTMLAnalyzer = func(file string) []string {
 
 	allDependencies := make([]string, 0)
 
-	htmlFile, fileErr := os.Open(file)
+	htmlFile, fileErr := ioutil.ReadFile(file)
 	if fileErr != nil {
 		log.Fatal("Failed to open JS file!", file, fileErr)
 	}
-	defer htmlFile.Close()
 
-	readBuffer := new(bytes.Buffer)
-	readBuffer.ReadFrom(htmlFile)
+	transformedFile := transform.ApplyTransformers(".html", &htmlFile)
+	pretty.Println("Transformed File", string(*transformedFile.Bytes))
 
 	// Iterate though all RegExp 'macthers'
 	for _, matcher := range dependeciesMatcher {
-		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", readBuffer, matcher)...)
+		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", &htmlFile, matcher)...)
 	}
 
 	strippedDeps := []string{}

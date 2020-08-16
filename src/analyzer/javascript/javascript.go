@@ -2,8 +2,8 @@ package javascript
 
 import (
 	"bytes"
+	"io/ioutil"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 
@@ -34,18 +34,14 @@ var JsAnalyzer = func(file string) []string {
 
 	allDependencies := make([]string, 0)
 
-	jsFile, fileErr := os.Open(file)
+	jsFile, fileErr := ioutil.ReadFile(file)
 	if fileErr != nil {
 		log.Fatal("Failed to open JS file!", file, fileErr)
 	}
-	defer jsFile.Close()
-
-	readBuffer := new(bytes.Buffer)
-	readBuffer.ReadFrom(jsFile)
 
 	// Iterate though all RegExp 'macthers'
 	for _, matcher := range dependeciesMatcher {
-		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", readBuffer, matcher)...)
+		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", &jsFile, matcher)...)
 	}
 
 	strippedDeps := []string{}

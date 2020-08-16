@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"bytes"
 	"path/filepath"
 	"regexp"
 )
@@ -36,12 +35,12 @@ func AnalyzeFile(filePath string) []string {
 }
 
 // FindCaptureGroupMatches find all matches of specified capture group inside buffer
-func FindCaptureGroupMatches(captureGroup string, buffer *bytes.Buffer, matcher *regexp.Regexp) []string {
+func FindCaptureGroupMatches(captureGroup string, bytes *[]byte, matcher *regexp.Regexp) []string {
 
 	allDependencies := []string{}
 
 	// Find all submatches using this matcher
-	matches := matcher.FindAllSubmatch(buffer.Bytes(), -1)
+	matches := matcher.FindAllSubmatch(*bytes, -1)
 	subNames := matcher.SubexpNames()
 
 	// Find all matches -- First one is the whole match!

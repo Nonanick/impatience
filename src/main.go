@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 
+	"github.com/nonanick/impatience/cache"
+
 	"github.com/nonanick/impatience/impatienceServer"
 
 	"github.com/nonanick/impatience/analyzer/css"
@@ -34,6 +36,7 @@ func main() {
 
 	// Add file transformers
 	javascript.UseNodeModules()
+	cache.ApplySWCache()
 
 	// Generate dependencies map -- uses file analyzers, register them before calling
 	fileDependencies := GenerateDependenciesMap(crawResult)
