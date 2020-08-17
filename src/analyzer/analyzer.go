@@ -7,8 +7,11 @@ import (
 
 var registeredAnalyzers = make(map[string][]ExtensionAnalyzer)
 
-// RegisterExtensionAnalyzer Adds an analyzer to be used on an extension and check for dependencies
-func RegisterExtensionAnalyzer(extension string, analyzer ExtensionAnalyzer) {
+// ForExtension Adds an analyzer to be used on an extension and check for dependencies
+func ForExtension(
+	extension string,
+	analyzer ExtensionAnalyzer,
+) {
 	registeredAnalyzers[extension] = append(registeredAnalyzers[extension], analyzer)
 }
 
@@ -35,7 +38,11 @@ func AnalyzeFile(filePath string) []string {
 }
 
 // FindCaptureGroupMatches find all matches of specified capture group inside buffer
-func FindCaptureGroupMatches(captureGroup string, bytes *[]byte, matcher *regexp.Regexp) []string {
+func FindCaptureGroupMatches(
+	captureGroup string,
+	bytes *[]byte,
+	matcher *regexp.Regexp,
+) []string {
 
 	allDependencies := []string{}
 

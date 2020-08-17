@@ -3,16 +3,17 @@ package css
 import (
 	"io/ioutil"
 	"log"
+	"mime"
 	"regexp"
 	"strings"
 
 	"github.com/nonanick/impatience/analyzer"
 )
 
-var defaultImporter, rgErr = regexp.Compile("url\\s*\\((?P<path>.*|.*)\\)\\s*(?:;?)")
+var urlImporter, rgErr = regexp.Compile("url\\s*\\((?P<path>.*|.*)\\)\\s*(?:;?)")
 
 var dependeciesMatcher = []*regexp.Regexp{
-	defaultImporter,
+	urlImporter,
 }
 
 // CSSAnalyzer - Open and analyzes a JS file searcing for its dependencies
@@ -42,13 +43,14 @@ var CSSAnalyzer = func(file string) []string {
 }
 
 var cssAnalyzer = analyzer.ExtensionAnalyzer{
-	Name:     "",
+	Name:     "CSS Analyzer",
 	Analyzer: CSSAnalyzer,
 }
 
 // Register - Register in the Analyzer the JSAnalyzer function
 func Register() {
-	analyzer.RegisterExtensionAnalyzer(".css", cssAnalyzer)
+	mime.AddExtensionType(".css", "text/css")
+	analyzer.ForExtension(".css", cssAnalyzer)
 }
 
 // AddMatcher - Add a RegExp that will match the path for the dependency inside of the file

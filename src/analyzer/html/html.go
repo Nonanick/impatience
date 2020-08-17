@@ -3,12 +3,9 @@ package html
 import (
 	"io/ioutil"
 	"log"
+	"mime"
 	"regexp"
 	"strings"
-
-	"github.com/kr/pretty"
-
-	"github.com/nonanick/impatience/transform"
 
 	"github.com/nonanick/impatience/analyzer"
 )
@@ -27,14 +24,10 @@ var dependeciesMatcher = []*regexp.Regexp{
 var HTMLAnalyzer = func(file string) []string {
 
 	allDependencies := make([]string, 0)
-
 	htmlFile, fileErr := ioutil.ReadFile(file)
 	if fileErr != nil {
-		log.Fatal("Failed to open JS file!", file, fileErr)
+		log.Fatal("Failed to open HTML file!", file, fileErr)
 	}
-
-	transformedFile := transform.ApplyTransformers(".html", &htmlFile)
-	pretty.Println("Transformed File", string(*transformedFile.Bytes))
 
 	// Iterate though all RegExp 'macthers'
 	for _, matcher := range dependeciesMatcher {
@@ -59,5 +52,6 @@ var htmlAnalyzer = analyzer.ExtensionAnalyzer{
 
 // Register - Register in the Analyzer the JSAnalyzer function
 func Register() {
-	analyzer.RegisterExtensionAnalyzer(".html", htmlAnalyzer)
+	mime.AddExtensionType(".html", "text/html")
+	analyzer.ForExtension(".html", htmlAnalyzer)
 }

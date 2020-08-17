@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"log"
+	"mime"
 	"regexp"
 	"strings"
 
@@ -53,7 +54,7 @@ var JsAnalyzer = func(file string) []string {
 
 		// File does not end with '.js' and is a relative "." or absolute path "/"
 		if !strings.HasSuffix(strippedPath, ".js") && (strings.HasPrefix(strippedPath, ".") || strings.HasPrefix(strippedPath, "/")) {
-			strippedDeps = append(strippedDeps, strippedPath+".js")
+			strippedDeps = append(strippedDeps, strippedPath)
 		} else
 		// File does not end with '.js' and is NOT a relative or absolute path
 		if !(strings.HasPrefix(removeSingleQuotes, ".") || strings.HasPrefix(strippedPath, "/")) {
@@ -78,7 +79,8 @@ var javascriptAnalyzer = analyzer.ExtensionAnalyzer{
 
 // Register - Register in the Analyzer the JSAnalyzer function
 func Register() {
-	analyzer.RegisterExtensionAnalyzer(".js", javascriptAnalyzer)
+	mime.AddExtensionType(".js", "text/javascript")
+	analyzer.ForExtension(".js", javascriptAnalyzer)
 }
 
 // AddMatcher Add a RegExp that will match the path for the dependency inside of the file

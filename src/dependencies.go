@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/kr/pretty"
 	"github.com/nonanick/impatience/analyzer"
 	"github.com/nonanick/impatience/crawler"
 )
@@ -48,6 +47,5 @@ func GenerateDependenciesMap(graph crawler.DirectoryGraph) map[string][]string {
 		}
 
 	}
-	pretty.Println("Dependencies Map created", DependenciesMap)
 	return DependenciesMap
 }

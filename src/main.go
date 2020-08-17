@@ -3,16 +3,15 @@ package main
 import (
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 
-	"github.com/nonanick/impatience/cache"
-
-	"github.com/nonanick/impatience/impatienceServer"
+	"github.com/nonanick/impatience/pathresolver"
 
 	"github.com/nonanick/impatience/analyzer/css"
 	"github.com/nonanick/impatience/analyzer/html"
 	"github.com/nonanick/impatience/analyzer/javascript"
 	"github.com/nonanick/impatience/crawler"
+	"github.com/nonanick/impatience/impatienceserver"
 )
 
 func main() {
@@ -24,7 +23,7 @@ func main() {
 	}
 
 	// Build the absolute path from wd + given path
-	absPath := path.Join(wd, "../public")
+	absPath := filepath.Join(wd, "..", "public")
 
 	// Crawl public directory
 	crawResult := crawler.Crawl(absPath)
@@ -36,20 +35,35 @@ func main() {
 
 	// Add file transformers
 	javascript.UseNodeModules()
-	cache.ApplySWCache()
 
 	// Generate dependencies map -- uses file analyzers, register them before calling
 	fileDependencies := GenerateDependenciesMap(crawResult)
+	knownFiles := crawler.AllFilenames(crawResult)
+	knownFilesStatsArr := crawler.AllFiles(crawResult)
+	var knownFilesStats = map[string]crawler.FileCrawlInfo{}
+
+	for _, f := range knownFilesStatsArr {
+		knownFilesStats[f.FilePath] = f
+	}
 
 	// Add configurations to HTTP2 server
-	impatienceServer.Configure(&impatienceServer.ImpatienceConfig{
-		Port:             443,
-		Root:             absPath,
-		KnownFiles:       crawler.AllFilenames(crawResult),
-		FileDependencies: fileDependencies,
-	})
+	impatienceserver.Configure(
+		&impatienceserver.ImpatienceConfig{
+			Port:             443,
+			Root:             absPath,
+			KnownFiles:       knownFiles,
+			KnownFilesStats:  &knownFilesStats,
+			FileDependencies: &fileDependencies,
+		},
+	)
+
+	// Add path resolvers - Absolute, Relative, With Index, With Extension
+	pathresolver.AddResolver(pathresolver.Absolute)
+	pathresolver.AddResolver(pathresolver.Relative)
+	pathresolver.AddResolver(pathresolver.WithIndex)
+	pathresolver.AddResolver(pathresolver.WithExtension)
 
 	// Run Server
-	impatienceServer.Launch()
+	impatienceserver.Launch()
 
 }

@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,9 +10,9 @@ import (
 // Crawl will search for all the files and directories inside the root
 func Crawl(root string) DirectoryGraph {
 
-	rootDir, error := os.Open(root)
-	if error != nil {
-		log.Fatal("Failed to open Root Directory!")
+	rootDir, err := os.Open(root)
+	if err != nil {
+		log.Fatal("Failed to open Root Directory!", err)
 	}
 
 	rootGraph := crawlDirectory(root, rootDir)
@@ -23,7 +24,10 @@ func Crawl(root string) DirectoryGraph {
 	return rootGraph
 }
 
-func crawlDirectory(dirPath string, directory *os.File) DirectoryGraph {
+func crawlDirectory(
+	dirPath string,
+	directory *os.File,
+) DirectoryGraph {
 
 	innerDirectories := make([]DirectoryGraph, 0)
 	innerFiles := make([]FileCrawlInfo, 0)
@@ -60,7 +64,7 @@ func crawlDirectory(dirPath string, directory *os.File) DirectoryGraph {
 			filePath := filepath.Join(dirPath, fileOrDir.Name())
 			childFile, fileErr := os.Open(filePath)
 			if fileErr != nil {
-				log.Fatal("Coudl not open child file ", fileOrDir.Name())
+				log.Fatal("Could not open child file ", fileOrDir.Name())
 			}
 
 			fileCrawlInfo := getFileInfo(filePath, childFile)
@@ -78,7 +82,10 @@ func crawlDirectory(dirPath string, directory *os.File) DirectoryGraph {
 	}
 }
 
-func getFileInfo(filePath string, file *os.File) FileCrawlInfo {
+func getFileInfo(
+	filePath string,
+	file *os.File,
+) FileCrawlInfo {
 
 	fileStats, statErr := os.Stat(filePath)
 	if statErr != nil {
@@ -88,13 +95,14 @@ func getFileInfo(filePath string, file *os.File) FileCrawlInfo {
 	parentFolder, fileName := filepath.Split(filePath)
 	extension := filepath.Ext(fileStats.Name())
 	size := fileStats.Size()
-
+	modTime := fileStats.ModTime()
 	return FileCrawlInfo{
 		FilePath:     filePath,
 		ParentFolder: parentFolder,
 		Name:         fileName,
 		Extension:    extension,
 		Size:         uint32(size),
+		LastModified: fmt.Sprint(modTime),
 	}
 }
 
@@ -145,4 +153,5 @@ type FileCrawlInfo struct {
 	FilePath     string
 	Extension    string
 	Size         uint32
+	LastModified string
 }
