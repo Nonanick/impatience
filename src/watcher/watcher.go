@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
+	"github.com/kr/pretty"
 	"github.com/nonanick/impatience/impatienceserver"
 
 	"github.com/fsnotify/fsnotify"
 )
+
+// TrackedDirectories map of all the tracked directories
+var TrackedDirectories = map[string]bool{}
 
 // Watch watch for directory changes
 func Watch() {
@@ -19,7 +24,24 @@ func Watch() {
 	defer watcher.Close()
 
 	done := make(chan bool)
+
 	go handleFSWatchEvents(watcher)
+
+	for _, file := range impatienceserver.KnownFiles {
+
+		dir, _ := filepath.Split(file)
+
+		if TrackedDirectories[dir] != true {
+			err := watcher.Add(dir)
+			if err != nil {
+				pretty.Println("Failed to add file to watcher!")
+			} else {
+				TrackedDirectories[dir] = true
+			}
+
+		}
+
+	}
 	<-done
 }
 
@@ -34,6 +56,7 @@ func handleFSWatchEvents(watcher *fsnotify.Watcher) {
 
 			// Write event --> Update LastModified
 			if event.Op&fsnotify.Write == fsnotify.Write {
+				pretty.Println("FS Watch, triggered write event!", event)
 				updateFileLastModTime(event.Name)
 			}
 			// Create event --> add file to trackers
@@ -58,11 +81,11 @@ func handleFSWatchEvents(watcher *fsnotify.Watcher) {
 }
 
 func updateRemovedFile(file string) {
-	fmt.Println("Removed file!", file)
+	impatienceserver.RemoveFile(file)
 }
 
 func trackNewFile(file string) {
-	fmt.Println("New file created!", file)
+	impatienceserver.AddFile(file)
 }
 
 func updateFileLastModTime(file string) {
@@ -76,5 +99,6 @@ func updateFileLastModTime(file string) {
 
 	fileStats := (*impatienceserver.KnownFilesStats)[file]
 	fileStats.LastModified = fmt.Sprint(newModTime)
-	(*impatienceserver.KnownFilesStats)[file] = fileStats
+
+	impatienceserver.UpdateFile(fileStats)
 }

@@ -13,7 +13,7 @@ import (
 func Extract(
 	request *http.Request,
 	allKnownFileHashs map[string]string,
-) []string {
+) map[string]bool {
 	return extractCacheStrategy(
 		request,
 		allKnownFileHashs,
@@ -24,7 +24,7 @@ func Extract(
 // using the defined strategy
 func Insert(
 	response http.ResponseWriter,
-	previouslyCached []string,
+	previouslyCached map[string]bool,
 	pushedFiles []string,
 	knownFilesHashs map[string]string,
 ) {
@@ -48,13 +48,13 @@ func ChangeStrategy(strategy Strategy) {
 type ExtractStrategyFn func(
 	request *http.Request,
 	knownFiles map[string]string,
-) []string
+) map[string]bool
 
 // InsertStrategyFn function that will output the cached information into
 // a response
 type InsertStrategyFn func(
 	response http.ResponseWriter,
-	previouslyCached []string,
+	previouslyCached map[string]bool,
 	servedFiles []string,
 	knownFileHashs map[string]string,
 )
@@ -79,10 +79,11 @@ func CalculateHashs(files []crawler.FileCrawlInfo) map[string]string {
 // CalculateHash calculate the hash for a single file
 func CalculateHash(file crawler.FileCrawlInfo) string {
 	hash := md5.New()
-
 	bytes := []byte(HashSalt + file.FilePath + file.LastModified)
+	hash.Write(bytes)
+	encodedHash := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
-	return base64.StdEncoding.EncodeToString(hash.Sum(bytes))
+	return encodedHash
 }
 
 // Extract strategy currently being used

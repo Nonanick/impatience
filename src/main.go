@@ -12,6 +12,7 @@ import (
 	"github.com/nonanick/impatience/analyzer/javascript"
 	"github.com/nonanick/impatience/crawler"
 	"github.com/nonanick/impatience/impatienceserver"
+	"github.com/nonanick/impatience/watcher"
 )
 
 func main() {
@@ -63,6 +64,7 @@ func main() {
 	pathresolver.AddResolver(pathresolver.WithIndex)
 	pathresolver.AddResolver(pathresolver.WithExtension)
 
+	go watcher.Watch()
 	// Run Server
 	impatienceserver.Launch()
 

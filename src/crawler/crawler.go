@@ -67,7 +67,7 @@ func crawlDirectory(
 				log.Fatal("Could not open child file ", fileOrDir.Name())
 			}
 
-			fileCrawlInfo := getFileInfo(filePath, childFile)
+			fileCrawlInfo := GetFileInfo(filePath, childFile)
 			innerFiles = append(innerFiles, fileCrawlInfo)
 		}
 	}
@@ -82,7 +82,8 @@ func crawlDirectory(
 	}
 }
 
-func getFileInfo(
+// GetFileInfo Return a file crawl info from a open file
+func GetFileInfo(
 	filePath string,
 	file *os.File,
 ) FileCrawlInfo {
