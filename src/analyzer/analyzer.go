@@ -22,14 +22,14 @@ func HasAssociatedAnalyzer(filePath string) bool {
 }
 
 // AnalyzeFile Analyzes the file using the extension and return all dependencies
-func AnalyzeFile(filePath string) []string {
+func AnalyzeFile(path string, content []byte) []string {
 	allDependencies := []string{}
 
-	extension := filepath.Ext(filePath)
+	extension := filepath.Ext(path)
 
 	if len(registeredAnalyzers[extension]) > 0 {
 		for _, registeredAnalyzer := range registeredAnalyzers[extension] {
-			analyzedDeps := registeredAnalyzer.Analyzer(filePath)
+			analyzedDeps := registeredAnalyzer.Analyzer(path, content)
 			allDependencies = append(allDependencies, analyzedDeps...)
 		}
 	}
@@ -40,14 +40,14 @@ func AnalyzeFile(filePath string) []string {
 // FindCaptureGroupMatches find all matches of specified capture group inside buffer
 func FindCaptureGroupMatches(
 	captureGroup string,
-	bytes *[]byte,
+	bytes []byte,
 	matcher *regexp.Regexp,
 ) []string {
 
 	allDependencies := []string{}
 
 	// Find all submatches using this matcher
-	matches := matcher.FindAllSubmatch(*bytes, -1)
+	matches := matcher.FindAllSubmatch(bytes, -1)
 	subNames := matcher.SubexpNames()
 
 	// Find all matches -- First one is the whole match!
@@ -65,7 +65,7 @@ func FindCaptureGroupMatches(
 }
 
 // ExtensionAnalyzerFunc Function signature that receives a filepath and return the dependencies
-type ExtensionAnalyzerFunc func(string) []string
+type ExtensionAnalyzerFunc func(path string, content []byte) []string
 
 // ExtensionAnalyzer Struct containing the name of the analyzer and its function
 type ExtensionAnalyzer struct {

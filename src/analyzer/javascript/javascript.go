@@ -1,48 +1,39 @@
 package javascript
 
 import (
-	"bytes"
-	"io/ioutil"
-	"log"
 	"mime"
 	"regexp"
 	"strings"
 
-	"github.com/nonanick/impatience/transform/nodeModules"
-
+	"github.com/kr/pretty"
 	"github.com/nonanick/impatience/analyzer"
 )
 
-// useNodeResolution inidicate to server if it should use node resolution
-// (by searching inside node_modules for libraries!)
-var useNodeResolution = false
+// ImportRegExp regular expression used to find import statements in js syntax
+var ImportRegExp = regexp.MustCompile(
+	"import\\s*(?P<name>.*)\\s*from.*(?P<path>\".*\"|'.*')(?:;?)",
+)
 
-var defaultImporter, rgErr = regexp.Compile("import.*from.*(?P<path>\".*\"|'.*')(?:;?)")
+// RequireRegExp regular expression used to fin require statements in js syntax
+var RequireRegExp = regexp.MustCompile(
+	"const\\s*(?P<name>.*)\\s*=\\s*require\\(\\s*(?P<path>\".*\"|'.*')\\s*\\)(?:;?)",
+)
 
-var dependeciesMatcher = []*regexp.Regexp{
-	defaultImporter,
-}
-
-var requiredNodeLibraries = map[string]bytes.Buffer{}
-
-// UseNodeModules intructs the javascript analyzer to use NodeModules transformer
-func UseNodeModules() {
-	useNodeResolution = true
+var dependeciesRegExp = []*regexp.Regexp{
+	ImportRegExp,
+	RequireRegExp,
 }
 
 // JsAnalyzer - Open and analyzes a JS file searching for its dependencies
-var JsAnalyzer = func(file string) []string {
+var JsAnalyzer = func(file string, content []byte) []string {
 
 	allDependencies := make([]string, 0)
 
-	jsFile, fileErr := ioutil.ReadFile(file)
-	if fileErr != nil {
-		log.Fatal("Failed to open JS file!", file, fileErr)
-	}
+	var jsFile []byte = content
 
 	// Iterate though all RegExp 'macthers'
-	for _, matcher := range dependeciesMatcher {
-		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", &jsFile, matcher)...)
+	for _, matcher := range dependeciesRegExp {
+		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", jsFile, matcher)...)
 	}
 
 	strippedDeps := []string{}
@@ -58,12 +49,13 @@ var JsAnalyzer = func(file string) []string {
 		} else
 		// File does not end with '.js' and is NOT a relative or absolute path
 		if !(strings.HasPrefix(removeSingleQuotes, ".") || strings.HasPrefix(strippedPath, "/")) {
-			// Use node resolution?
-			if useNodeResolution {
-				strippedDeps = append(strippedDeps, nodeModules.NodeLibraryPreffix+strippedPath)
-			} else {
-				strippedDeps = append(strippedDeps, nodeModules.NodeLibraryPreffix+strippedPath)
-			}
+			// Probably node module!
+			strippedDeps = append(strippedDeps, strippedPath)
+			pretty.Println(
+				"JS Analyzer found a non relative path that does not contain an .js extension:",
+				strippedPath,
+				"\nIs it a node module?",
+			)
 		} else {
 			strippedDeps = append(strippedDeps, strippedPath)
 		}
@@ -73,7 +65,7 @@ var JsAnalyzer = func(file string) []string {
 }
 
 var javascriptAnalyzer = analyzer.ExtensionAnalyzer{
-	Name:     "",
+	Name:     "Javascript Analyzer",
 	Analyzer: JsAnalyzer,
 }
 
@@ -87,5 +79,5 @@ func Register() {
 // expects a named capture group 'path', if the matchers returns a match but there's no
 // capture group the match will be ignored!
 func AddMatcher(matcher *regexp.Regexp) {
-	dependeciesMatcher = append(dependeciesMatcher, matcher)
+	dependeciesRegExp = append(dependeciesRegExp, matcher)
 }

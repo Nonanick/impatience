@@ -1,8 +1,6 @@
 package css
 
 import (
-	"io/ioutil"
-	"log"
 	"mime"
 	"regexp"
 	"strings"
@@ -17,18 +15,15 @@ var dependeciesMatcher = []*regexp.Regexp{
 }
 
 // CSSAnalyzer - Open and analyzes a JS file searcing for its dependencies
-var CSSAnalyzer = func(file string) []string {
+var CSSAnalyzer = func(file string, content []byte) []string {
 
 	allDependencies := make([]string, 0)
 
-	cssFile, fileErr := ioutil.ReadFile(file)
-	if fileErr != nil {
-		log.Fatal("Failed to open CSS file!", file, fileErr)
-	}
+	cssFile := content
 
 	// Iterate though all RegExp 'macthers'
 	for _, matcher := range dependeciesMatcher {
-		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", &cssFile, matcher)...)
+		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", cssFile, matcher)...)
 	}
 
 	strippedDeps := []string{}

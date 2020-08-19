@@ -15,11 +15,10 @@ func AddResolver(resolver Resolver) {
 func Resolve(
 	path string,
 	public string,
-	knownFiles []string,
 ) (string, error) {
 
 	for _, resolver := range registeredResolvers {
-		resPath, pathErr := resolver(path, public, knownFiles)
+		resPath, pathErr := resolver(path, public)
 		if pathErr == nil {
 			return resPath, nil
 		}
@@ -29,7 +28,7 @@ func Resolve(
 }
 
 // Resolver Function that tris to resolve the pathname
-type Resolver = func(string, string, []string) (string, error)
+type Resolver = func(string, string) (string, error)
 
 // HasKnownPath return if the impatienceserver has the given path inside its 'Knownpath' array
 func HasKnownPath(

@@ -52,7 +52,6 @@ var CookieStrategy = Strategy{
 		response http.ResponseWriter,
 		previouslyCached map[string]bool,
 		pushedFiles []string,
-		knownFileHashs map[string]string,
 	) {
 		allHashs := []string{}
 

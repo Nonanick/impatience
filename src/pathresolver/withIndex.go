@@ -4,13 +4,14 @@ import (
 	"errors"
 	"path/filepath"
 	"strings"
+
+	"github.com/nonanick/impatience/files"
 )
 
 // WithIndex Tries to resolve the file by adding index.html
 func WithIndex(
 	path string,
 	public string,
-	knownFiles []string,
 ) (string, error) {
 
 	if !strings.HasPrefix(path, public) {
@@ -19,7 +20,7 @@ func WithIndex(
 
 	path = filepath.Join(path, "index.html")
 
-	if HasKnownPath(path, knownFiles) {
+	if files.IsKnown(path) {
 		return path, nil
 	}
 

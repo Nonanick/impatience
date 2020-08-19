@@ -4,8 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"net/http"
-
-	"github.com/nonanick/impatience/crawler"
 )
 
 // Extract return all cached files passed in the HTTP request
@@ -26,13 +24,11 @@ func Insert(
 	response http.ResponseWriter,
 	previouslyCached map[string]bool,
 	pushedFiles []string,
-	knownFilesHashs map[string]string,
 ) {
 	insertCacheStrategy(
 		response,
 		previouslyCached,
 		pushedFiles,
-		knownFilesHashs,
 	)
 }
 
@@ -56,7 +52,6 @@ type InsertStrategyFn func(
 	response http.ResponseWriter,
 	previouslyCached map[string]bool,
 	servedFiles []string,
-	knownFileHashs map[string]string,
 )
 
 // Strategy define a cache strategy to be used by Impatience
@@ -65,21 +60,10 @@ type Strategy struct {
 	Insert  InsertStrategyFn
 }
 
-// CalculateHashs calculate hash using salt + file name + last modified time
-func CalculateHashs(files []crawler.FileCrawlInfo) map[string]string {
-	var allHashs = make(map[string]string)
-
-	for _, file := range files {
-		allHashs[file.FilePath] = CalculateHash(file)
-	}
-
-	return allHashs
-}
-
 // CalculateHash calculate the hash for a single file
-func CalculateHash(file crawler.FileCrawlInfo) string {
+func CalculateHash(path string, lastModified string) string {
 	hash := md5.New()
-	bytes := []byte(HashSalt + file.FilePath + file.LastModified)
+	bytes := []byte(HashSalt + path + lastModified)
 	hash.Write(bytes)
 	encodedHash := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 

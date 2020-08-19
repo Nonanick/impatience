@@ -1,71 +1,53 @@
 package main
 
 import (
-	"log"
 	"os"
-	"path/filepath"
 
-	"github.com/nonanick/impatience/pathresolver"
-
-	"github.com/nonanick/impatience/analyzer/css"
-	"github.com/nonanick/impatience/analyzer/html"
-	"github.com/nonanick/impatience/analyzer/javascript"
-	"github.com/nonanick/impatience/crawler"
-	"github.com/nonanick/impatience/impatienceserver"
-	"github.com/nonanick/impatience/watcher"
+	"github.com/kr/pretty"
 )
 
 func main() {
 
-	// Get wd from running proccess
-	wd, wdErr := os.Getwd()
-	if wdErr != nil {
-		log.Fatalln("Working directory could not be reached!", wdErr)
+	var command string
+	var args []string
+
+	if len(os.Args) >= 2 {
+		command = os.Args[1]
+		args = os.Args[2:]
+	} else {
+		command = "help"
+		args = []string{}
 	}
 
-	// Build the absolute path from wd + given path
-	absPath := filepath.Join(wd, "..", "public")
+	if ImpatienceCommands[command] != nil {
+		ImpatienceCommands[command](args)
+	} else {
+		knownCommands := []string{}
 
-	// Crawl public directory
-	crawResult := crawler.Crawl(absPath)
+		for command := range ImpatienceCommands {
+			knownCommands = append(knownCommands, command)
+		}
 
-	// Add file analyzers
-	javascript.Register()
-	html.Register()
-	css.Register()
+		pretty.Println("[Impatience] Error!\nUnkown sub command:", command, "!\nPlease use on of the following commands: ", knownCommands)
 
-	// Add file transformers
-	javascript.UseNodeModules()
-
-	// Generate dependencies map -- uses file analyzers, register them before calling
-	fileDependencies := GenerateDependenciesMap(crawResult)
-	knownFiles := crawler.AllFilenames(crawResult)
-	knownFilesStatsArr := crawler.AllFiles(crawResult)
-	var knownFilesStats = map[string]crawler.FileCrawlInfo{}
-
-	for _, f := range knownFilesStatsArr {
-		knownFilesStats[f.FilePath] = f
+		ImpatienceCommands["help"]([]string{})
+		return
 	}
 
-	// Add configurations to HTTP2 server
-	impatienceserver.Configure(
-		&impatienceserver.ImpatienceConfig{
-			Port:             443,
-			Root:             absPath,
-			KnownFiles:       knownFiles,
-			KnownFilesStats:  &knownFilesStats,
-			FileDependencies: &fileDependencies,
-		},
-	)
+}
 
-	// Add path resolvers - Absolute, Relative, With Index, With Extension
-	pathresolver.AddResolver(pathresolver.Absolute)
-	pathresolver.AddResolver(pathresolver.Relative)
-	pathresolver.AddResolver(pathresolver.WithIndex)
-	pathresolver.AddResolver(pathresolver.WithExtension)
+// ImpatienceCLICommand add a new CLI command
+type ImpatienceCLICommand = func(args []string)
 
-	go watcher.Watch()
-	// Run Server
-	impatienceserver.Launch()
+// ImpatienceCommands hold all the callable impatience commands
+var ImpatienceCommands map[string]ImpatienceCLICommand = map[string]ImpatienceCLICommand{
+	"launch": Launch,
+	"help":   Help,
+	"init": func(args []string) {
+		pretty.Println(
+			"[Impatience - Init]:\n",
+			"			Generating config file...",
+		)
 
+	},
 }

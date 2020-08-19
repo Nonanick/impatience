@@ -4,6 +4,8 @@ import (
 	"errors"
 	"path/filepath"
 	"strings"
+
+	"github.com/nonanick/impatience/files"
 )
 
 // ResolveWithExtensions list of all extensions that will be tried
@@ -13,7 +15,6 @@ var ResolveWithExtensions []string = []string{".js", ".css", ".html", ".ts"}
 func WithExtension(
 	path string,
 	public string,
-	knownFiles []string,
 ) (string, error) {
 
 	if !strings.HasPrefix(path, public) {
@@ -23,7 +24,7 @@ func WithExtension(
 	for _, ext := range ResolveWithExtensions {
 		withExt := path + ext
 
-		if HasKnownPath(withExt, knownFiles) {
+		if files.IsKnown(withExt) {
 			return withExt, nil
 		}
 	}

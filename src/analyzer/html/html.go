@@ -1,8 +1,6 @@
 package html
 
 import (
-	"io/ioutil"
-	"log"
 	"mime"
 	"regexp"
 	"strings"
@@ -21,17 +19,13 @@ var dependeciesMatcher = []*regexp.Regexp{
 }
 
 // HTMLAnalyzer - Open and analyzes a JS file searcing for its dependencies
-var HTMLAnalyzer = func(file string) []string {
+var HTMLAnalyzer = func(file string, content []byte) []string {
 
 	allDependencies := make([]string, 0)
-	htmlFile, fileErr := ioutil.ReadFile(file)
-	if fileErr != nil {
-		log.Fatal("Failed to open HTML file!", file, fileErr)
-	}
-
+	htmlFile := content
 	// Iterate though all RegExp 'macthers'
 	for _, matcher := range dependeciesMatcher {
-		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", &htmlFile, matcher)...)
+		allDependencies = append(allDependencies, analyzer.FindCaptureGroupMatches("path", htmlFile, matcher)...)
 	}
 
 	strippedDeps := []string{}

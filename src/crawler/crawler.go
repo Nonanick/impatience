@@ -5,7 +5,15 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/nonanick/impatience/files"
 )
+
+// IgnoredDirectories specifies which directory names should be avoided
+var IgnoredDirectories = []string{
+	"node_modules",
+}
 
 // Crawl will search for all the files and directories inside the root
 func Crawl(root string) DirectoryGraph {
@@ -30,8 +38,18 @@ func crawlDirectory(
 ) DirectoryGraph {
 
 	innerDirectories := make([]DirectoryGraph, 0)
-	innerFiles := make([]FileCrawlInfo, 0)
+	innerFiles := make([]*files.File, 0)
 	parentPath, directoryName := filepath.Split(directory.Name())
+
+	if strings.HasSuffix(dirPath, "node_modules") {
+		return DirectoryGraph{
+			ParentFolder: parentPath,
+			Name:         directoryName,
+			ChildLength:  uint16(0),
+			Directories:  innerDirectories,
+			Files:        innerFiles,
+		}
+	}
 
 	allDirChildren, childErr := directory.Readdir(0)
 	if childErr != nil {
@@ -62,13 +80,13 @@ func crawlDirectory(
 		} else {
 
 			filePath := filepath.Join(dirPath, fileOrDir.Name())
-			childFile, fileErr := os.Open(filePath)
-			if fileErr != nil {
-				log.Fatal("Could not open child file ", fileOrDir.Name())
-			}
+			fileInfo, addErr := files.Add(filePath)
 
-			fileCrawlInfo := GetFileInfo(filePath, childFile)
-			innerFiles = append(innerFiles, fileCrawlInfo)
+			if addErr != nil {
+				fmt.Println("Failed to add file ", filePath, ", returned error: ", addErr)
+			} else {
+				innerFiles = append(innerFiles, fileInfo)
+			}
 		}
 	}
 
@@ -82,38 +100,13 @@ func crawlDirectory(
 	}
 }
 
-// GetFileInfo Return a file crawl info from a open file
-func GetFileInfo(
-	filePath string,
-	file *os.File,
-) FileCrawlInfo {
-
-	fileStats, statErr := os.Stat(filePath)
-	if statErr != nil {
-
-	}
-
-	parentFolder, fileName := filepath.Split(filePath)
-	extension := filepath.Ext(fileStats.Name())
-	size := fileStats.Size()
-	modTime := fileStats.ModTime()
-	return FileCrawlInfo{
-		FilePath:     filePath,
-		ParentFolder: parentFolder,
-		Name:         fileName,
-		Extension:    extension,
-		Size:         uint32(size),
-		LastModified: fmt.Sprint(modTime),
-	}
-}
-
 // AllFilenames Return all file absolute paths inside the given directory graph
 //
 func AllFilenames(graph DirectoryGraph) []string {
 	allFiles := make([]string, 0)
 
 	for _, fileInfo := range graph.Files {
-		allFiles = append(allFiles, filepath.Join(fileInfo.ParentFolder, fileInfo.Name))
+		allFiles = append(allFiles, filepath.Join(fileInfo.Dir, fileInfo.Name))
 	}
 
 	for _, dir := range graph.Directories {
@@ -123,9 +116,9 @@ func AllFilenames(graph DirectoryGraph) []string {
 	return allFiles
 }
 
-// AllFiles Return all FileCrawlInfo found inside directory graph
-func AllFiles(graph DirectoryGraph) []FileCrawlInfo {
-	allFiles := make([]FileCrawlInfo, 0)
+// AllFiles Return all files.File found inside directory graph
+func AllFiles(graph DirectoryGraph) []*files.File {
+	allFiles := make([]*files.File, 0)
 
 	for _, fileInfo := range graph.Files {
 		allFiles = append(allFiles, fileInfo)
@@ -144,15 +137,5 @@ type DirectoryGraph struct {
 	Name         string
 	ChildLength  uint16
 	Directories  []DirectoryGraph
-	Files        []FileCrawlInfo
-}
-
-//FileCrawlInfo - gathered
-type FileCrawlInfo struct {
-	ParentFolder string
-	Name         string
-	FilePath     string
-	Extension    string
-	Size         uint32
-	LastModified string
+	Files        []*files.File
 }

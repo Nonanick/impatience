@@ -3,18 +3,19 @@ package pathresolver
 import (
 	"errors"
 	"path/filepath"
+
+	"github.com/nonanick/impatience/files"
 )
 
 // Relative Path resolver that check if path is relative to public folder and is known by impatience server
 func Relative(
 	path string,
 	public string,
-	knownFiles []string,
 ) (string, error) {
 
 	absPath := filepath.Join(public, path)
 
-	if HasKnownPath(absPath, knownFiles) {
+	if files.IsKnown(absPath) {
 		return absPath, nil
 	}
 

@@ -1,20 +1,13 @@
 package transform
 
 import (
-	"mime"
+	"io/ioutil"
 	"path/filepath"
+
+	"github.com/kr/pretty"
 )
 
 var registeredTransformers = map[string][]FileTransformer{}
-
-var transformedFiles = map[string]File{}
-
-// File structure containing a "transformed" file
-type File struct {
-	Bytes    []byte
-	MimeType string
-	Path     string
-}
 
 // HasFileTransformer Check if the file has an associated transformer
 // the file extension is used to determine if the file actually has
@@ -24,31 +17,41 @@ func HasFileTransformer(filePath string) bool {
 	return len(registeredTransformers[extension]) > 0
 }
 
+// Transform a file applying all transformations inside it
+func Transform(file string) []byte {
+
+	ext := filepath.Ext(file)
+	content, err := ioutil.ReadFile(file)
+
+	if err != nil {
+		pretty.Println("Failed to transform file", file, " impatience could not read bytes from the original file!")
+
+		return []byte{}
+	}
+
+	return Apply(ext, file, content)
+
+}
+
 // Apply apply all transformers associated with an extension
-// Path is an empty string and is added just to facilitate setting its
-// value after function call
-func Apply(extension string,
+func Apply(
+	extension string,
 	path string,
 	bytes []byte,
-) File {
+) []byte {
 
 	if len(registeredTransformers[extension]) > 0 {
 		var newBytes = bytes
 
 		for _, transformer := range registeredTransformers[extension] {
-			newBytes = transformer(newBytes)
+			newBytes = transformer(path, newBytes)
 		}
 
 		bytes = newBytes
 	}
 
-	mimeType := mime.TypeByExtension(extension)
+	return bytes
 
-	return File{
-		MimeType: mimeType,
-		Bytes:    bytes,
-		Path:     path,
-	}
 }
 
 // AddFileTransformer adds a file transformer to an extension
@@ -59,23 +62,6 @@ func AddFileTransformer(
 	registeredTransformers[extension] = append(registeredTransformers[extension], transformer)
 }
 
-// IsFileTransformed return if a path has a tranaformed file associates with it
-func IsFileTransformed(path string) bool {
-	return len(transformedFiles[path].Bytes) > 0
-}
-
-// AddTransformedFile Add a File struct as an transformed file;
-// file.Path will be used for mapping!
-func AddTransformedFile(file File) {
-	transformedFiles[file.Path] = file
-}
-
-// GetTransformedFile return the transformed file associated with the
-// given path
-func GetTransformedFile(path string) File {
-	return transformedFiles[path]
-}
-
 // FileTransformer Function that "transforms" a file bytes
 // it should modify the bytes and return
-type FileTransformer = func(bytes []byte) []byte
+type FileTransformer = func(path string, content []byte) []byte
