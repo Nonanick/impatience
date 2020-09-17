@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/nonanick/impatience/files"
 )
@@ -41,13 +40,16 @@ func crawlDirectory(
 	innerFiles := make([]*files.File, 0)
 	parentPath, directoryName := filepath.Split(directory.Name())
 
-	if strings.HasSuffix(dirPath, "node_modules") {
-		return DirectoryGraph{
-			ParentFolder: parentPath,
-			Name:         directoryName,
-			ChildLength:  uint16(0),
-			Directories:  innerDirectories,
-			Files:        innerFiles,
+	// Is in ignored directories?
+	for _, ignored := range IgnoredDirectories {
+		if ignored == directoryName {
+			return DirectoryGraph{
+				ParentFolder: parentPath,
+				Name:         directoryName,
+				ChildLength:  uint16(0),
+				Directories:  innerDirectories,
+				Files:        innerFiles,
+			}
 		}
 	}
 
@@ -63,9 +65,7 @@ func crawlDirectory(
 		if fileOrDir.IsDir() {
 
 			dirPath := filepath.Join(dirPath, fileOrDir.Name())
-
 			childDir, err := os.Open(dirPath)
-
 			if err != nil {
 				log.Fatal("Could not open child directory ", fileOrDir.Name())
 			}

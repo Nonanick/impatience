@@ -7,6 +7,7 @@ import (
 
 	"github.com/kr/pretty"
 	"github.com/nonanick/impatience/analyzer"
+	"github.com/nonanick/impatience/transform/nodemodules"
 )
 
 // ImportRegExp regular expression used to find import statements in js syntax
@@ -14,14 +15,14 @@ var ImportRegExp = regexp.MustCompile(
 	"import\\s*(?P<name>.*)\\s*from.*(?P<path>\".*\"|'.*')(?:;?)",
 )
 
-// RequireRegExp regular expression used to fin require statements in js syntax
-var RequireRegExp = regexp.MustCompile(
-	"const\\s*(?P<name>.*)\\s*=\\s*require\\(\\s*(?P<path>\".*\"|'.*')\\s*\\)(?:;?)",
+// ExportRegExp regular expression to find export statements in js syntax
+var ExportRegExp = regexp.MustCompile(
+	"export\\s*(?P<name>.*)\\s*from.*(?P<path>\".*\"|'.*')(?:;?)",
 )
 
 var dependeciesRegExp = []*regexp.Regexp{
 	ImportRegExp,
-	RequireRegExp,
+	ExportRegExp,
 }
 
 // JsAnalyzer - Open and analyzes a JS file searching for its dependencies
@@ -56,6 +57,7 @@ var JsAnalyzer = func(file string, content []byte) []string {
 				strippedPath,
 				"\nIs it a node module?",
 			)
+			nodemodules.AddNodeFile(strippedPath)
 		} else {
 			strippedDeps = append(strippedDeps, strippedPath)
 		}

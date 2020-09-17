@@ -19,9 +19,10 @@ import (
 // File hold all the information of a file necessary
 // to server the file through impatience
 type File struct {
-	Path string
-	Name string
-	Dir  string
+	PublicPath string
+	Path       string
+	Name       string
+	Dir        string
 
 	Extension string
 	MimeType  string
@@ -43,6 +44,12 @@ var knownFiles = map[string]bool{}
 
 // hold all the known/tracked files inside Impatience
 var allFiles = map[string]File{}
+
+// publicKnownFiles easy way to check if a public request is known
+var publicKnownFiles = map[string]bool{}
+
+// publicMap maps a public path to a real file path
+var publicMap = map[string]string{}
 
 // All Return all tracked files
 func All() []File {
@@ -66,9 +73,10 @@ func Create(file string) (File, error) {
 	mimeType := mime.TypeByExtension(ext)
 
 	fileDef := File{
-		Path: file,
-		Dir:  directory,
-		Name: name,
+		PublicPath: strings.Replace(file, options.PublicRoot, "", 0),
+		Path:       file,
+		Dir:        directory,
+		Name:       name,
 
 		Bytes: []byte{},
 
@@ -85,11 +93,15 @@ func Create(file string) (File, error) {
 		Size: uint32(fileStats.Size()),
 	}
 
-	applyTransformers(&fileDef)
-
-	analyzeFile(&fileDef)
+	go processFile(&fileDef)
 
 	return fileDef, nil
+}
+
+// Will transform and analyze the file!
+func processFile(file *File) {
+	applyTransformers(file)
+	analyzeFile(file)
 }
 
 func applyTransformers(file *File) *File {
@@ -137,6 +149,10 @@ func Add(file string) (*File, error) {
 	allFiles[file] = fileDef
 	knownFiles[file] = true
 
+	// Update public file information
+	publicKnownFiles[fileDef.PublicPath] = true
+	publicMap[fileDef.PublicPath] = file
+
 	return &fileDef, nil
 }
 
@@ -144,6 +160,10 @@ func Add(file string) (*File, error) {
 func AddDefinition(file File) {
 	allFiles[file.Path] = file
 	knownFiles[file.Path] = true
+
+	// Update public file information
+	publicKnownFiles[file.PublicPath] = true
+	publicMap[file.PublicPath] = file.Path
 }
 
 // Update asks for the system to update a file definition
@@ -186,11 +206,23 @@ func IsKnown(file string) bool {
 	return knownFiles[file] != false
 }
 
+// IsPubliclyKnown if the  public path is known to Impatience
+func IsPubliclyKnown(publicPath string) bool {
+	return publicKnownFiles[publicPath] != false
+}
+
 // Get will return a File definition or nil if the file
 // is not known
 func Get(file string) *File {
 	f := allFiles[file]
 	return &f
+}
+
+// GetPublic return a file definition or nil if the file is not found
+// using its public path
+func GetPublic(publicPath string) *File {
+	fPath := publicMap[publicPath]
+	return Get(fPath)
 }
 
 // MapEtags return all known etags

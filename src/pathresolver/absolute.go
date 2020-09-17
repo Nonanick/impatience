@@ -13,9 +13,18 @@ func Absolute(
 	public string,
 ) (string, error) {
 
+	// Absolute file dir
 	if filepath.IsAbs(path) {
 		if files.IsKnown(path) {
 			return path, nil
+		}
+	}
+
+	// Absolute public dir
+	if path[0] == '/' {
+		if files.IsPubliclyKnown(public) {
+			f := files.GetPublic(public)
+			return f.Path, nil
 		}
 	}
 

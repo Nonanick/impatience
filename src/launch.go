@@ -13,6 +13,7 @@ import (
 	"github.com/nonanick/impatience/pathresolver"
 	"github.com/nonanick/impatience/server"
 	"github.com/nonanick/impatience/transform/nodemodules"
+	"github.com/nonanick/impatience/transform/typescript"
 	"github.com/nonanick/impatience/watcher"
 )
 
@@ -31,7 +32,7 @@ func Launch(args []string) {
 	// Build the absolute path from wd + given path
 	absPath := filepath.Join(wd, "..", "public")
 	options.PublicRoot = absPath
-	options.NodeModulesRoot = filepath.Join("..", "node_modules")
+	options.NodeModulesRoot = filepath.Join("node_modules")
 
 	// Add file analyzers
 	javascript.Register()
@@ -39,6 +40,7 @@ func Launch(args []string) {
 	css.Register()
 
 	// Add file transformers
+	typescript.Register()
 	nodemodules.Register()
 
 	// Crawl public directory and
@@ -60,9 +62,6 @@ func Launch(args []string) {
 	pathresolver.AddResolver(pathresolver.Relative)
 	pathresolver.AddResolver(pathresolver.WithIndex)
 	pathresolver.AddResolver(pathresolver.WithExtension)
-
-	// Inject node libraries inside known files, serving them
-	nodemodules.InjectLibraries()
 
 	// Start fs watcher
 	go watcher.Watch()

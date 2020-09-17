@@ -106,11 +106,6 @@ func handlePushableRequest(
 		files.MapEtags(),
 	)
 
-	if isPushRequest(request) {
-		pretty.Println("Is Push request for", request.RequestURI, cachedFiles)
-	} else {
-		pretty.Println("Is NOT Push request for", request.RequestURI)
-	}
 	if !isPushRequest(request) {
 		var totalSize uint32 = 0
 		fileDeps := FlattenDependencies(requestedFile, 0, map[string]bool{}, &totalSize)
@@ -179,6 +174,14 @@ func handlePushableRequest(
 	response.Header().Add("ETag", requestedFile.Etag)
 	response.Header().Add("Cache-Control", "private, must-revalidate")
 	response.Write(requestedFile.GetContent())
+
+}
+
+func sendFile(response http.ResponseWriter, file *files.File) {
+
+}
+
+func send304(response http.ResponseWriter, file *files.File) {
 
 }
 

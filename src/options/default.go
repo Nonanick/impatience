@@ -7,7 +7,7 @@ var Default = ImpatienceOptions{
 	ExternalAnalyzers:      map[string]string{},
 	ExternalTransformers:   map[string]string{},
 	UseNodeModules:         true,
-	NodeModulesRoot:        "./node_modules",
+	NodeModulesRoot:        "node_modules",
 	SearchForNodeModulesIn: []string{".js", ".ts", ".jsx", ".tsx", ".vue"},
 	TLSCertificateFile:     "./ssl/cert.pem",
 	TLSKeyFile:             "./ssl/key.pem",

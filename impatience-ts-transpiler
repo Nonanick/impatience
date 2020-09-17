@@ -1,0 +1,23 @@
+// @ts-check
+/** @type typescript.ts */
+const ts =  require('typescript');
+const fs = require('fs')
+
+const args = process.argv
+
+if (args.length > 2) {
+  
+  const compilepath = args[2];
+  const content = fs.readFileSync(compilepath).toString()
+  const transpiled = ts.transpile(content, {
+    module : ts.ModuleKind.ES2015,
+    target : ts.ScriptTarget.ES2015,
+    esModuleInterop : true,
+    noEmit : true,
+    experimentalDecorators : true,
+    moduleResolution : ts.ModuleResolutionKind.NodeJs,
+    skipLibCheck : true
+  })
+
+  process.stdout.write(transpiled);
+} 

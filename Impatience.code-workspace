@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"name": "src",
+			"path": "src"
+		},
+		{
+			"name": "public",
+			"path": "public"
+		}
+	]
+}

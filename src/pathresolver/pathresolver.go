@@ -28,18 +28,4 @@ func Resolve(
 }
 
 // Resolver Function that tris to resolve the pathname
-type Resolver = func(string, string) (string, error)
-
-// HasKnownPath return if the impatienceserver has the given path inside its 'Knownpath' array
-func HasKnownPath(
-	path string,
-	knownFiles []string,
-) bool {
-	for _, knownPath := range knownFiles {
-		if knownPath == path {
-			return true
-		}
-	}
-
-	return false
-}
+type Resolver = func(path string, public string) (string, error)

@@ -1,7 +1,8 @@
 package require
 
 import (
-	"github.com/nonanick/impatience/analyzer/javascript"
+	"regexp"
+
 	"github.com/nonanick/impatience/transform"
 )
 
@@ -14,13 +15,18 @@ func Register() {
 	transform.AddFileTransformer(".js", RequireTransform)
 }
 
+// RequireRegExp regular expression used to find require statements in js syntax
+var RequireRegExp = regexp.MustCompile(
+	"const\\s*(?P<name>.*)\\s*=\\s*require\\(\\s*(?P<path>\".*\"|'.*')\\s*\\)(?:;?)",
+)
+
 // RequireTransform function that analyzes
 var RequireTransform transform.FileTransformer = func(
 	path string,
 	content []byte,
 ) []byte {
 
-	matcher := javascript.RequireRegExp
+	matcher := RequireRegExp
 
 	// Find all submatches using this matcher
 	matches := matcher.FindAllSubmatch(content, -1)

@@ -16,6 +16,10 @@ import (
 // TrackedDirectories map of all the tracked directories
 var TrackedDirectories = map[string]bool{}
 
+// IgnoreDirectories directories that should be ignored by file watcher
+// all subdirectories will also be ignored!
+var IgnoreDirectories = []string{}
+
 // Watch watch for directory changes
 func Watch() {
 	watcher, err := fsnotify.NewWatcher()
@@ -34,7 +38,7 @@ func Watch() {
 			!strings.HasSuffix(
 				file.Dir,
 				strings.ReplaceAll(
-					nodemodules.NodeLibraryPreffix,
+					nodemodules.NodePublicRoot,
 					"/",
 					string(os.PathSeparator),
 				),
